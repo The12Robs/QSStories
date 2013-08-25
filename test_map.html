@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+ 
+	<style type="text/css">
+		html { height: 100% }
+		body { height: 100%; margin: 0; padding: 0 }
+		#map-canvas {	height: 50%;
+						width: 50%}
+
+		img.rotate {
+			-webkit-transform:rotate(90deg) scale(.3,.3);
+
+		}
+    </style>
+    <script type="text/javascript"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDbx2gfcTtP91SDBwi4T7htFygnXJ4wYiA&sensor=false">
+    </script>
+	
+    <script type="text/javascript">
+      function initialize() {
+        var mapOptions = {
+          center: new google.maps.LatLng(46.3926067, -112.7391728),
+          zoom: 10,
+          mapTypeId: google.maps.MapTypeId.HYBRID
+        };
+        var map = new google.maps.Map(document.getElementById("map-canvas"),
+            mapOptions);
+		
+		var infoWindow = new google.maps.InfoWindow;
+		
+		downloadUrl("phpsqlajax_genxml.php", function(data) {
+		  var xml = data.responseXML;
+		  var markers = xml.documentElement.getElementsByTagName("marker");
+		  for (var i = 0; i < markers.length; i++) {
+			var name = "test name";
+			//var address = "test address";
+			var timestamp = markers[i].getAttribute("timestamp");
+			var point = new google.maps.LatLng(
+				parseFloat(markers[i].getAttribute("lat")),
+				parseFloat(markers[i].getAttribute("lng")));
+			var html = "<b>" + name + "</b> <br/>" + timestamp;
+			var marker = new google.maps.Marker({
+			  map: map,
+			  position: point
+			});
+			bindInfoWindow(marker, map, infoWindow, html);
+		  }
+		});
+
+		/*setTimeout(function(){
+			document.getElementById('imageview').getElementsByTagName('img')[0].src = "file:///C:/Users/The/Documents/qs%20data/Image-ExifTool-9.34/samples/2013-06-16/Interval.6-15-2013.19.55.38.jpg";
+			},5000);*/
+	  }
+	  
+	  function downloadUrl(url,callback) {
+	  
+		 var request = window.ActiveXObject ?
+			 new ActiveXObject('Microsoft.XMLHTTP') :
+			 new XMLHttpRequest;
+
+		 request.onreadystatechange = function() {
+		   if (request.readyState == 4) {
+			 request.onreadystatechange = doNothing;
+			 callback(request, request.status);
+		   }
+		 };
+
+		 request.open('GET', url, true);
+		 request.send(null);
+		}
+		  
+      google.maps.event.addDomListener(window, 'load', initialize);
+	  
+	function bindInfoWindow(marker, map, infoWindow, html) {
+	
+      google.maps.event.addListener(marker, 'click', function() {
+        infoWindow.setContent(html);
+        infoWindow.open(map, marker);
+      });
+    }
+	  
+
+		
+	function doNothing() {}
+	  
+    </script>
+  </head>
+  
+  <body>
+	<div id="imageview">
+		<img src="/samples/2013-06-16/Interval.6-15-2013.18.57.36.jpg" height="500px">
+	</div>
+	<div id="tagview">
+		<ul><li>test tag</li></ul>
+	</div>
+	<div id="peopleview">
+		<ul><li>test person</li></ul>
+	</div>
+    <div id="map-canvas"/>
+  </body>
+</html>

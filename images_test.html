@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+ 
+	<style type="text/css">
+		html { height: 100% }
+		body { height: 100%; margin: 0; padding: 0 }
+		#map-canvas {	height: 50%;
+						width: 50%}
+
+		img.rotate {
+			-webkit-transform:rotate(90deg) scale(.3,.3);
+
+		}
+    </style>
+    <script type="text/javascript"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDbx2gfcTtP91SDBwi4T7htFygnXJ4wYiA&sensor=false">
+    </script>
+	
+    <script type="text/javascript">
+		var customIcons = {
+		  op: {
+			icon: 'http://labs.google.com/ridefinder/images/mm_20_blue.png',
+			shadow: 'http://labs.google.com/ridefinder/images/mm_20_shadow.png'
+		  },
+		  gl: {
+			icon: 'http://labs.google.com/ridefinder/images/mm_20_red.png',
+			shadow: 'http://labs.google.com/ridefinder/images/mm_20_shadow.png'
+		  }
+		};
+		
+      function initialize() {
+        var mapOptions = {
+          center: new google.maps.LatLng(47.2867731, -115.0750295),
+          zoom: 7,
+          mapTypeId: google.maps.MapTypeId.HYBRID
+        };
+        var map = new google.maps.Map(document.getElementById("map-canvas"),
+            mapOptions);
+		
+		var infoWindow = new google.maps.InfoWindow;
+		
+		downloadUrl("get_images.php", function(data) {
+			var xml = data.responseXML;
+			var records = xml.documentElement.getElementsByTagName("record");
+			var lastDate = new Date(records[0].getAttribute("timestamp"));
+			var arr = Array.prototype.slice.call(records);
+			
+			var currTime = new Date(arr[0].getAttribute("timestamp"));
+			
+	//		updateMap(map, arr.shift(), infoWindow);
+
+			var currentInterval = 0;
+			
+			var intHandle = setInterval(function(){
+				currentInterval++;
+				document.getElementById("clock").innerHTML = currTime;
+				//alert(currentInterval);
+				currTime = new Date(currTime.getTime() + 100000);
+				//alert(currTime);
+				while(currTime > new Date(arr[0].getAttribute("timestamp"))){
+				//	document.getElementById("clock").innerHTML = arr[0].getAttribute("timestamp");
+					if(arr[0].getAttribute("lat")){
+						updateMap(map, arr.shift(), infoWindow);
+					} else {
+						updateImage(arr.shift());
+					}
+				}
+				if(currentInterval==1200){
+					clearInterval(intHandle);
+				}
+			}, 1000);
+			
+		});
+		
+	  }
+	  
+		function updateImage(currImage) {
+			//alert(currImage.getAttribute("path"));
+			document.getElementById('imageview').getElementsByTagName('img')[0].src = currImage.getAttribute("path");
+		}
+	  
+		function updateMap(map, currMarker, infoWindow){
+			//alert("map!");
+			var name = "test name";
+			//var address = "test address";
+			var timestamp = currMarker.getAttribute("timestamp");
+			var point = new google.maps.LatLng(
+				parseFloat(currMarker.getAttribute("lat")),
+				parseFloat(currMarker.getAttribute("lng")));
+			var source = currMarker.getAttribute("source");
+			var html = "<b>" + name + "</b> <br/>" + timestamp;
+			var icon = customIcons[source] || {};
+			var marker = new google.maps.Marker({
+			  map: map,
+			  position: point,
+			  icon: icon.icon,
+			  shadow: icon.shadow
+			});
+			bindInfoWindow(marker, map, infoWindow, html);
+			map.panTo(point);
+		  
+		}
+	  
+	  function downloadUrl(url,callback) {
+	  
+		 var request = window.ActiveXObject ?
+			 new ActiveXObject('Microsoft.XMLHTTP') :
+			 new XMLHttpRequest;
+
+		 request.onreadystatechange = function() {
+		   if (request.readyState == 4) {
+			 request.onreadystatechange = doNothing;
+			 callback(request, request.status);
+		   }
+		 };
+
+		 request.open('GET', url, true);
+		 request.send(null);
+		}
+		  
+      google.maps.event.addDomListener(window, 'load', initialize);
+	  
+	function bindInfoWindow(marker, map, infoWindow, html) {
+	
+      google.maps.event.addListener(marker, 'click', function() {
+        infoWindow.setContent(html);
+        infoWindow.open(map, marker);
+      });
+    }
+	  
+
+		
+	function doNothing() {}
+	  
+    </script>
+  </head>
+  
+  <body>
+	<div id="clock">
+		time
+	</div>
+	<div id="imageview">
+		<img src="/samples/2013-06-16/Interval.6-15-2013.18.57.36.jpg" height="500px">
+	</div>
+	<div id="tagview">
+		<ul><li>test tag</li></ul>
+	</div>
+	<div id="peopleview">
+		<ul><li>test person</li></ul>
+	</div>
+    <div id="map-canvas"/>
+  </body>
+</html>
